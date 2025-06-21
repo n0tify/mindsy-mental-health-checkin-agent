@@ -1,139 +1,137 @@
-import json
 import os
-import re
-from datetime import date, datetime
+import json
+import random
+import datetime
+import pyttsx3
 import matplotlib.pyplot as plt
-import streamlit as st
+from dotenv import load_dotenv
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 from openai import AzureOpenAI
-import pyttsx3
 
-# 🧠 GPT-4o Client Setup (Azure)
+# Load .env variables
+load_dotenv()
+
+# Initialize Azure OpenAI GPT-4o
 client = AzureOpenAI(
-    api_key="8WxLaoodYxa7XSK2rCiWuP3nqwWUShSUVd5FrjEYSqqROfIwc0qzJQQJ99BFAC77bzfXJ3w3AAABACOGweqQ",
+    api_key=os.getenv("AZURE_OPENAI_API_KEY"),
     api_version="2024-12-01-preview",
-    azure_endpoint="https://mindcraft-kapidhwaj-openai-api-key.openai.azure.com/"
+    azure_endpoint=os.getenv("AZURE_ENDPOINT")
 )
 
-# 🔒 Sanitize username for safe filenames
-def sanitize_username(username):
-    return re.sub(r'\W+', '', username.lower())
+deployment_name = os.getenv("AZURE_DEPLOYMENT")
 
-# 🔍 Mood detection using Vader
+# Initialize sentiment analyzer
+analyzer = SentimentIntensityAnalyzer()
+
+# 🧠 Mood Detection Function
 def detect_mood(text):
-    analyzer = SentimentIntensityAnalyzer()
-    score = analyzer.polarity_scores(text)['compound']
-    if score >= 0.5:
+    score = analyzer.polarity_scores(text)
+    compound = score['compound']
+    if compound >= 0.5:
         return "happy"
-    elif score > 0:
+    elif compound >= 0.1:
+        return "content"
+    elif compound > -0.1:
         return "neutral"
-    elif score > -0.5:
+    elif compound > -0.5:
         return "stressed"
     else:
         return "low"
 
-# 💡 Get supportive suggestion from GPT
+# 💬 GPT-based Suggestion Generator
 def get_suggestion(mood):
+    prompt = f"My mood is '{mood}'. Give me a short, kind, and calming self-care suggestion."
     try:
         response = client.chat.completions.create(
-            model="mindcraft-gpt4o",
+            model=deployment_name,
             messages=[
-                {"role": "system", "content": "You are a helpful, kind mental health assistant."},
-                {"role": "user", "content": f"Give a short comforting suggestion for someone feeling {mood}."}
+                {"role": "system", "content": "You are a warm and empathetic mental health companion."},
+                {"role": "user", "content": prompt}
             ]
         )
         return response.choices[0].message.content.strip()
     except Exception as e:
-        return f"(Suggestion unavailable: {str(e)})"
+        return f"(Suggestion unavailable: {e})"
 
-# 📘 Generate reflective journal
+# 📓 GPT-based Journal Entry Generator
 def generate_journal_entry(user_input, mood):
+    prompt = (
+        f"The user said: '{user_input}' and is feeling '{mood}'. "
+        "Generate a reflective, comforting, and positive journal entry in first person tone."
+    )
     try:
         response = client.chat.completions.create(
-            model="mindcraft-gpt4o",
+            model=deployment_name,
             messages=[
-                {"role": "system", "content": "You write short, warm, emotional journal reflections for users."},
-                {"role": "user", "content": f"Write a gentle journal entry based on this input: '{user_input}', mood is {mood}."}
+                {"role": "system", "content": "You help generate uplifting journal reflections for mental clarity."},
+                {"role": "user", "content": prompt}
             ]
         )
         return response.choices[0].message.content.strip()
     except Exception as e:
-        return f"Today, I felt {mood}. I shared: {user_input}"
+        return f"(Journal unavailable: {e})"
 
-# 💾 Save mood and journal entry
-def log_mood(mood, user_input, username):
-    safe_user = sanitize_username(username)
-    os.makedirs("data", exist_ok=True)  # ✅ Ensure folder exists
+# 📦 Mood & Journal Logger
+def log_mood(mood, text, name="default"):
+    os.makedirs("data", exist_ok=True)
+    filename = f"data/{name.lower()}_mood_logs.json"
+    logs = []
 
-    filename = f"data/{safe_user}_mood_logs.json"
-    entry = {
-        "date": str(date.today()),
-        "mood": mood,
-        "input": user_input
-    }
-
-    try:
+    if os.path.exists(filename):
         with open(filename, "r") as f:
-            logs = json.load(f)
-    except:
-        logs = []
+            try:
+                logs = json.load(f)
+            except json.JSONDecodeError:
+                logs = []
 
-    logs.append(entry)
+    logs.append({
+        "date": datetime.datetime.now().strftime("%Y-%m-%d %H:%M"),
+        "mood": mood,
+        "entry": text
+    })
 
     with open(filename, "w") as f:
         json.dump(logs, f, indent=2)
 
-# 🚨 Check if user is repeatedly feeling low/stressed
-def check_alert(username):
-    safe_user = sanitize_username(username)
-    filename = f"data/{safe_user}_mood_logs.json"
+# 📊 Mood Trend Graph
+def show_mood_trend(name="default"):
+    filename = f"data/{name.lower()}_mood_logs.json"
+    if not os.path.exists(filename):
+        return
 
-    try:
-        with open(filename, "r") as f:
-            logs = json.load(f)
-        recent = logs[-3:]
-        lows = [entry for entry in recent if entry["mood"] in ["low", "stressed"]]
-        return len(lows) == 3
-    except:
+    with open(filename, "r") as f:
+        logs = json.load(f)
+
+    mood_score_map = {"low": 1, "stressed": 2, "neutral": 3, "content": 4, "happy": 5}
+    dates = [entry["date"] for entry in logs[-7:]]
+    scores = [mood_score_map.get(entry["mood"], 3) for entry in logs[-7:]]
+
+    plt.figure(figsize=(8, 4))
+    plt.plot(dates, scores, marker='o', linestyle='-', color='#6a0572')
+    plt.xticks(rotation=45, ha='right')
+    plt.yticks([1, 2, 3, 4, 5], ["Low", "Stressed", "Neutral", "Content", "Happy"])
+    plt.title("Your Mood Trend (Recent 7 entries)", fontsize=12)
+    plt.tight_layout()
+    plt.grid(True)
+    st.pyplot(plt)
+
+# 🚨 Alert System for 3 Low/Stressed Moods
+def check_alert(name="default"):
+    filename = f"data/{name.lower()}_mood_logs.json"
+    if not os.path.exists(filename):
         return False
 
-# 📊 Display mood trend
-def show_mood_trend(username):
-    safe_user = sanitize_username(username)
-    filename = f"data/{safe_user}_mood_logs.json"
+    with open(filename, "r") as f:
+        logs = json.load(f)
 
-    try:
-        with open(filename, "r") as f:
-            data = json.load(f)
-        if not data:
-            st.info("No mood history yet.")
-            return
+    recent = logs[-3:]
+    return all(entry["mood"] in ["low", "stressed"] for entry in recent)
 
-        dates = [datetime.strptime(entry["date"], "%Y-%m-%d") for entry in data]
-        mood_map = {"low": 1, "stressed": 2, "neutral": 3, "happy": 4}
-        mood_levels = [mood_map.get(entry["mood"], 3) for entry in data]
-        labels = {1: "😞 Low", 2: "😰 Stressed", 3: "😐 Neutral", 4: "😊 Happy"}
-
-        fig, ax = plt.subplots(figsize=(8, 3))
-        ax.plot(dates, mood_levels, marker='o', linestyle='-', color="#6a0572")
-        ax.set_yticks([1, 2, 3, 4])
-        ax.set_yticklabels([labels[i] for i in [1, 2, 3, 4]])
-        ax.set_title(f"Mood Trend for {username.title()}")
-        ax.set_xlabel("Date")
-        ax.set_ylabel("Mood")
-        ax.grid(True, linestyle="--", alpha=0.5)
-        st.pyplot(fig)
-
-    except:
-        st.warning("⚠️ Could not display mood chart. Try journaling first.")
-
-# 🔊 Text-to-speech
-def speak(text):
+# 🗣️ Text-to-Speech Output
+def speak(message):
     try:
         engine = pyttsx3.init()
-        engine.setProperty('rate', 160)
-        engine.setProperty('volume', 1.0)
-        engine.say(text)
+        engine.say(message)
         engine.runAndWait()
-    except:
-        st.warning("🗣️ Text-to-speech not supported on this system.")
+    except Exception:
+        pass
