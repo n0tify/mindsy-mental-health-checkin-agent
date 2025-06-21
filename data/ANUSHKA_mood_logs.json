@@ -1,0 +1,27 @@
+[
+  {
+    "date": "2025-06-21",
+    "mood": "happy",
+    "input": "I AM FEELING GOOD TODAY"
+  },
+  {
+    "date": "2025-06-21",
+    "mood": "neutral",
+    "input": "i feel good\n"
+  },
+  {
+    "date": "2025-06-21",
+    "mood": "neutral",
+    "input": "i feel good\n"
+  },
+  {
+    "date": "2025-06-21",
+    "mood": "happy",
+    "input": "i am feeling great "
+  },
+  {
+    "date": "2025-06-21",
+    "mood": "happy",
+    "input": "i am feeling happy"
+  }
+]
