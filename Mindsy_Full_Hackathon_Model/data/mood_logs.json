@@ -1,0 +1,92 @@
+[
+  {
+    "date": "2025-06-21",
+    "mood": "happy",
+    "input": "i am feeling great today\n"
+  },
+  {
+    "date": "2025-06-21",
+    "mood": "stressed",
+    "input": "ii "
+  },
+  {
+    "date": "2025-06-21",
+    "mood": "happy",
+    "input": "i am feeling great "
+  },
+  {
+    "date": "2025-06-21",
+    "mood": "neutral",
+    "input": "i feel good "
+  },
+  {
+    "date": "2025-06-21",
+    "mood": "neutral",
+    "input": "i feel good "
+  },
+  {
+    "date": "2025-06-21",
+    "mood": "happy",
+    "input": "i feel great"
+  },
+  {
+    "date": "2025-06-21",
+    "mood": "happy",
+    "input": "i feel great"
+  },
+  {
+    "date": "2025-06-21",
+    "mood": "happy",
+    "input": "i feel great"
+  },
+  {
+    "date": "2025-06-21",
+    "mood": "happy",
+    "input": "i feel great"
+  },
+  {
+    "date": "2025-06-21",
+    "mood": "happy",
+    "input": "i feel great"
+  },
+  {
+    "date": "2025-06-21",
+    "mood": "happy",
+    "input": "i feel great"
+  },
+  {
+    "date": "2025-06-21",
+    "mood": "happy",
+    "input": "i feel great"
+  },
+  {
+    "date": "2025-06-21",
+    "mood": "happy",
+    "input": "i feel great"
+  },
+  {
+    "date": "2025-06-21",
+    "mood": "stressed",
+    "input": "I AM FEELING SAD TODAY\n"
+  },
+  {
+    "date": "2025-06-21",
+    "mood": "stressed",
+    "input": "I AM FEELING SAD TODAY\n"
+  },
+  {
+    "date": "2025-06-21",
+    "mood": "stressed",
+    "input": "I AM FEELING SAD TODAY\n"
+  },
+  {
+    "date": "2025-06-21",
+    "mood": "happy",
+    "input": "I AM FEELING GREAT\n"
+  },
+  {
+    "date": "2025-06-21",
+    "mood": "happy",
+    "input": "TODAY WAS AMAZING "
+  }
+]
